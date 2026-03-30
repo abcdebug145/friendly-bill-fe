@@ -1,0 +1,15 @@
+<div class="min-h-screen bg-gradient-to-r from-emerald-600 via-emerald-200 to-white flex items-center justify-center p-6">
+  <div class="w-full max-w-md bg-white/90 rounded-2xl border border-white/70 shadow-sm p-6 sm:p-8 text-center">
+    <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide">FriendlyBill</p>
+    <h1 class="text-3xl font-bold text-slate-900 mt-1">Xác thực email</h1>
+    <p
+      class="text-sm mt-4"
+      [class]="status === 'success' ? 'text-emerald-600' : status === 'error' ? 'text-rose-600' : 'text-slate-500'"
+    >
+      {{ message }}
+    </p>
+    <a routerLink="/login" class="inline-block mt-6 font-semibold text-emerald-600 hover:text-emerald-700">
+      Về trang đăng nhập
+    </a>
+  </div>
+</div>

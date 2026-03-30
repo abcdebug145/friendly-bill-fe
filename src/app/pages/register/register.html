@@ -1,0 +1,205 @@
+<div class="min-h-screen bg-gradient-to-r from-teal-700 via-teal-200 to-white grid lg:grid-cols-2">
+  <div class="fixed top-4 right-4 z-20 bg-white/90 border border-slate-200 rounded-xl p-1 shadow-sm">
+    <div class="relative grid grid-cols-2 w-28">
+      <div
+        class="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-lg bg-emerald-500 shadow-sm transition-transform duration-300 ease-out"
+        [style.transform]="i18n.currentLanguage() === 'en' ? 'translateX(2px)' : 'translateX(calc(100% + 2px))'"
+      ></div>
+
+    <button
+      ubButton
+      type="button"
+      class="relative z-10 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+      [class]="i18n.currentLanguage() === 'en' ? 'text-white' : 'text-slate-600'"
+      (click)="i18n.setLanguage('en')"
+    >
+      {{ 'common.langEnglish' | t }}
+    </button>
+    <button
+      ubButton
+      type="button"
+      class="relative z-10 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+      [class]="i18n.currentLanguage() === 'vi' ? 'text-white' : 'text-slate-600'"
+      (click)="i18n.setLanguage('vi')"
+    >
+      {{ 'common.langVietnamese' | t }}
+    </button>
+    </div>
+  </div>
+
+  <div class="hidden lg:flex text-white p-12 xl:p-16 flex-col justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/30 text-emerald-200 flex items-center justify-center font-bold text-xl">
+        $
+      </div>
+      <p class="text-2xl font-extrabold tracking-tight">{{ 'common.brand' | t }}</p>
+    </div>
+
+    <div class="space-y-6 max-w-md">
+      <h1 class="text-4xl font-bold leading-tight">{{ 'register.heroTitle' | t }}</h1>
+      <p class="text-slate-300 text-base">
+        {{ 'register.heroDescription' | t }}
+      </p>
+      <div class="space-y-3 text-sm">
+        <div class="rounded-xl bg-white/5 border border-white/10 px-4 py-3">{{ 'register.feature1' | t }}</div>
+        <div class="rounded-xl bg-white/5 border border-white/10 px-4 py-3">{{ 'register.feature2' | t }}</div>
+        <div class="rounded-xl bg-white/5 border border-white/10 px-4 py-3">{{ 'register.feature3' | t }}</div>
+      </div>
+    </div>
+
+    <p class="text-sm text-slate-400">{{ 'register.heroFooter' | t }}</p>
+  </div>
+
+  <div class="flex items-center justify-center p-6 sm:p-10">
+    <div class="w-full max-w-lg bg-white/90 backdrop-blur-[1px] rounded-2xl border border-white/70 shadow-sm p-6 sm:p-8">
+      <div class="mb-7">
+        <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide">{{ 'register.badge' | t }}</p>
+        <h2 class="text-3xl font-bold text-slate-900 mt-1">{{ 'register.title' | t }}</h2>
+        <p class="text-sm text-slate-500 mt-2">{{ 'register.subtitle' | t }}</p>
+      </div>
+
+      <form class="space-y-4" (ngSubmit)="submit()">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              [(ngModel)]="username"
+              placeholder="your_username"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label for="firstName" class="block text-sm font-medium text-slate-700 mb-1.5">{{ 'register.firstName' | t }}</label>
+            <input
+              id="firstName"
+              type="text"
+              name="firstName"
+              [(ngModel)]="firstName"
+              [placeholder]="'register.firstNamePlaceholder' | t"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label for="lastName" class="block text-sm font-medium text-slate-700 mb-1.5">{{ 'register.lastName' | t }}</label>
+            <input
+              id="lastName"
+              type="text"
+              name="lastName"
+              [(ngModel)]="lastName"
+              [placeholder]="'register.lastNamePlaceholder' | t"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="registerEmail" class="block text-sm font-medium text-slate-700 mb-1.5">{{ 'register.email' | t }}</label>
+          <input
+            id="registerEmail"
+            type="email"
+            placeholder="you@example.com"
+            name="email"
+            [(ngModel)]="email"
+            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label for="registerPassword" class="block text-sm font-medium text-slate-700 mb-1.5">{{ 'register.password' | t }}</label>
+            <input
+              id="registerPassword"
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              [placeholder]="'register.passwordPlaceholder' | t"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">{{ 'register.confirmPassword' | t }}</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              name="confirmPassword"
+              [(ngModel)]="confirmPassword"
+              [placeholder]="'register.confirmPasswordPlaceholder' | t"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+        </div>
+
+        <label class="flex items-start gap-2.5 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            name="agreeTerms"
+            [(ngModel)]="agreeTerms"
+            class="mt-0.5 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+          />
+          <span>{{ 'register.agreement' | t }}</span>
+        </label>
+
+        <div class="pt-1">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{{ 'register.orContinueWith' | t }}</p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              ubButton
+              type="button"
+              (click)="registerWithGoogle()"
+              [disabled]="isSubmitting"
+              class="flex items-center justify-center w-full rounded-xl bg-white hover:bg-slate-50 border border-slate-200 py-2.5 transition-colors"
+              aria-label="Register with Google"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-6 h-6">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+              </svg>
+            </button>
+
+            <button
+              ubButton
+              type="button"
+              (click)="registerWithFacebook()"
+              [disabled]="isSubmitting"
+              class="flex items-center justify-center w-full rounded-xl bg-white hover:bg-slate-50 border border-slate-200 py-2.5 transition-colors"
+              aria-label="Register with Facebook"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-6 h-6">
+                <path fill="#039be5" d="M24 5A19 19 0 1 0 24 43A19 19 0 1 0 24 5Z"></path>
+                <path fill="#fff" d="M26.572,29.036h4.917l0.772-4.995h-5.69v-2.73c0-2.075,0.678-3.915,2.619-3.915h3.119v-4.359c-0.548-0.074-1.707-0.236-3.897-0.236c-4.573,0-7.254,2.415-7.254,7.917v3.323h-4.701v4.995h4.701v13.729C22.089,42.905,23.032,43,24,43c0.875,0,1.729-0.08,2.572-0.194V29.036z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <p class="text-sm text-rose-600 text-center w-full">{{ errorMessage }}</p>
+        }
+
+        @if (successMessage) {
+          <p class="text-sm text-emerald-600 text-center w-full">{{ successMessage }}</p>
+        }
+
+        <button
+          ubButton
+          type="submit"
+          [disabled]="!agreeTerms || isSubmitting"
+          class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 font-semibold transition-colors"
+        >
+          {{ 'register.submit' | t }}
+        </button>
+      </form>
+
+      <p class="text-sm text-slate-600 text-center mt-6">
+        {{ 'register.hasAccount' | t }}
+        <a routerLink="/login" class="font-semibold text-emerald-600 hover:text-emerald-700">{{ 'register.goLogin' | t }}</a>
+      </p>
+    </div>
+  </div>
+</div>

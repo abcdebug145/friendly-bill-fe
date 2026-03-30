@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Friendly Bill</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+
+  <!--
+    `sockjs-client` dùng `browser-crypto.js` có tham chiếu biến toàn cục `global` (Node-like).
+    Trình duyệt không có sẵn nên cần map để tránh lỗi trắng trang.
+  -->
+  <script>
+    (function () {
+      try {
+        // Tạo binding `global` dạng "var" (classic script) để các bundle ES module
+        // có thể resolve identifier `global`.
+        // `sockjs-client` (browser-crypto) dùng thẳng `global` nên chỉ set property có thể chưa đủ.
+        // eslint-disable-next-line no-var
+        var global = window;
+        window.global = global;
+        globalThis.global = global;
+      } catch (e) {
+        // ignore
+      }
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

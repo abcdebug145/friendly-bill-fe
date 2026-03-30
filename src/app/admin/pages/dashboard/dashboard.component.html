@@ -1,0 +1,1091 @@
+<div class="fb-dashboard flex flex-col h-screen w-full bg-white text-gray-800 font-sans overflow-hidden">
+  <!-- NAVBAR -->
+  <div class="h-16 border-b border-gray-300 flex items-center justify-between px-[10vw] shrink-0 bg-white">
+    <div class="flex items-center gap-3">
+      <img src="/logo.svg" alt="" class="h-11 w-11 object-contain shrink-0" width="44" height="44" />
+      <span class="text-emerald-600 font-extrabold text-xl tracking-tight">Friendly Bill</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="relative" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          (click)="toggleNotifications()"
+          class="relative p-2 rounded-lg text-gray-600 hover:bg-emerald-50 transition-colors"
+          title="Thông báo"
+        >
+          <img src="/notification.svg" alt="" class="w-6 h-6 block" width="24" height="24" />
+          @if (unreadNotifications() > 0) {
+            <span class="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
+              {{ unreadNotifications() }}
+            </span>
+          }
+        </button>
+        @if (notificationOpen()) {
+          <div class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <p class="font-bold text-gray-900">Thông báo</p>
+              <button type="button" (click)="loadNotifications()" class="text-xs text-emerald-600 font-semibold">Tải lại</button>
+            </div>
+            <div class="max-h-96 overflow-y-auto">
+              @if (notifications().length === 0) {
+                <p class="text-sm text-gray-400 text-center py-8">Chưa có thông báo.</p>
+              } @else {
+                @for (notification of notifications().slice(0, 10); track notification.id) {
+                  <button
+                    type="button"
+                    (click)="openNotification(notification)"
+                    class="w-full text-left px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-emerald-50 transition-colors"
+                    [ngClass]="notification.isRead ? 'bg-white' : 'bg-emerald-50/60'"
+                  >
+                    <p class="text-sm font-semibold text-gray-900">{{ notification.title || notification.type }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ notification.body }}</p>
+                    @if (notification.createdAt) {
+                      <p class="text-[10px] text-gray-400 mt-1">{{ formatChatTime(notification.createdAt) }}</p>
+                    }
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+      <button
+        type="button"
+        (click)="goProfile()"
+        class="relative shrink-0 w-9 h-9 rounded-full overflow-hidden border border-gray-200 bg-emerald-50 text-emerald-800 text-xs font-bold hover:ring-2 hover:ring-emerald-300 hover:ring-offset-1 transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        title="Hồ sơ"
+      >
+        @if (profile()?.avatarUrl) {
+          <img [src]="profile()?.avatarUrl ?? ''" alt="" class="w-full h-full object-cover" />
+        } @else {
+          <span class="flex w-full h-full items-center justify-center">{{ navbarUserInitials() }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        (click)="logout()"
+        class="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+        title="Đăng xuất"
+      >
+        <img src="/logout.svg" alt="" class="w-5 h-5 block" width="20" height="20" />
+      </button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="flex flex-1 overflow-x-auto overflow-y-hidden bg-white px-[10vw]">
+    <div class="flex flex-1 min-w-0 border-x border-gray-200">
+    <!-- MENU + LIST GROUP -->
+    <div class="w-72 flex-shrink-0 border-r border-dashed border-gray-300 flex flex-col p-4 bg-gray-50/30">
+      <div class="mb-5">
+        <h2 class="text-xs font-semibold text-gray-400 mb-2 tracking-wider uppercase">Menu</h2>
+        <div class="flex items-center gap-2">
+        @for (item of [
+          {key: 'dashboard', label: 'Dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'},
+          {key: 'settings', label: 'Cài đặt', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'}
+        ]; track item.key) {
+            <button
+              type="button"
+              (click)="selectMenu($any(item.key))"
+              [class]="activeMenu() === item.key
+                ? 'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium text-xs'
+                : 'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white text-gray-600 transition-colors text-xs'"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="item.icon"></path>
+              </svg>
+              {{ item.label }}
+            </button>
+        }
+        </div>
+      </div>
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xs font-semibold text-gray-400 tracking-wider uppercase">Nhóm của bạn</h2>
+        <button
+          (click)="openCreateGroupModal()"
+          class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded transition-colors"
+          title="Tạo nhóm mới"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+        @if (loadingGroups()) {
+          <div class="flex items-center justify-center py-8 text-gray-400 text-sm">Đang tải...</div>
+        } @else if (groups().length === 0) {
+          <div class="text-center py-10 text-gray-400">
+            <p class="text-sm">Chưa có nhóm nào</p>
+            <button (click)="openCreateGroupModal()" class="mt-2 text-emerald-500 text-xs underline">Tạo nhóm đầu tiên</button>
+          </div>
+        } @else {
+          @for (group of groups(); track group.id) {
+            <div
+              (click)="selectGroup(group)"
+              [class]="selectedGroup()?.id === group.id
+                ? 'p-4 border rounded-xl border-emerald-200 bg-emerald-50 shadow-sm cursor-pointer border-l-4 border-l-emerald-500 transition-all'
+                : 'p-4 border rounded-xl border-gray-200 bg-white hover:border-emerald-200 hover:shadow-sm cursor-pointer transition-all'"
+            >
+              <div class="flex justify-between items-start mb-1">
+                <h3 [class]="selectedGroup()?.id === group.id ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'">
+                  {{ group.name }}
+                </h3>
+                @if (selectedGroup()?.id === group.id) {
+                  <span class="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Active</span>
+                }
+              </div>
+              <p class="text-xs text-gray-500">{{ group.memberCount }} thành viên</p>
+              @if (group.description) {
+                <p class="text-xs text-gray-400 mt-1 line-clamp-1">{{ group.description }}</p>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    @if (activeMenu() === 'settings') {
+      <div class="flex-1 min-w-[500px] min-h-0 overflow-y-auto bg-white p-6">
+        <div class="max-w-4xl mx-auto space-y-5">
+          <div>
+            <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Cài đặt</p>
+            <h1 class="text-2xl font-extrabold text-gray-900 mt-1">Tài khoản và tuỳ chọn</h1>
+            <p class="text-sm text-gray-500 mt-1">Quản lý hồ sơ, ngôn ngữ và giao diện hiển thị.</p>
+          </div>
+
+          @if (settingsError()) {
+            <p class="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ settingsError() }}</p>
+          }
+          @if (settingsMessage()) {
+            <p class="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ settingsMessage() }}</p>
+          }
+
+          <div class="grid lg:grid-cols-[280px_1fr] gap-5">
+            <div class="bg-white border border-gray-100 rounded-2xl p-5 h-fit">
+              <div class="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xl font-bold overflow-hidden">
+                @if (profile()?.avatarUrl) {
+                  <img [src]="profile()?.avatarUrl" alt="" class="w-full h-full object-cover" />
+                } @else {
+                  {{ (profile()?.fullName || currentUserEmail() || '?').slice(0, 2).toUpperCase() }}
+                }
+              </div>
+              <p class="font-bold text-gray-900 mt-4">{{ profile()?.fullName || currentUserEmail() }}</p>
+              <p class="text-sm text-gray-500 break-all">{{ profile()?.email || currentUserEmail() }}</p>
+              <label class="inline-flex mt-4 cursor-pointer px-3 py-2 rounded-lg border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-50">
+                {{ uploadingAvatar() ? 'Đang tải...' : 'Đổi avatar' }}
+                <input type="file" accept="image/*" class="hidden" (change)="onSettingsAvatarSelected($event)" />
+              </label>
+            </div>
+
+            <div class="space-y-5">
+              <form class="bg-white border border-gray-100 rounded-2xl p-5 space-y-4" (ngSubmit)="saveProfile()">
+                <div class="flex items-center justify-between">
+                  <h2 class="font-bold text-gray-900">Quản lý tài khoản</h2>
+                  @if (loadingProfile()) {
+                    <span class="text-xs text-gray-400">Đang tải...</span>
+                  }
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Họ tên</label>
+                  <input
+                    [(ngModel)]="profileForm.fullName"
+                    name="settingsFullName"
+                    class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Số điện thoại</label>
+                  <input
+                    [(ngModel)]="profileForm.phoneNumber"
+                    name="settingsPhoneNumber"
+                    class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <button
+                  ubButton
+                  type="submit"
+                  [disabled]="submittingProfile()"
+                  class="px-4 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60"
+                >
+                  {{ submittingProfile() ? 'Đang lưu...' : 'Lưu tài khoản' }}
+                </button>
+              </form>
+
+              <form class="bg-white border border-gray-100 rounded-2xl p-5 space-y-4" (ngSubmit)="changePassword()">
+                <h2 class="font-bold text-gray-900">Đổi mật khẩu</h2>
+                <div class="grid md:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Mật khẩu cũ</label>
+                    <input [(ngModel)]="passwordForm.oldPassword" name="settingsOldPassword" type="password"
+                      class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Mật khẩu mới</label>
+                    <input [(ngModel)]="passwordForm.newPassword" name="settingsNewPassword" type="password"
+                      class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Xác nhận</label>
+                    <input [(ngModel)]="passwordForm.confirmPassword" name="settingsConfirmPassword" type="password"
+                      class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                </div>
+                <button
+                  ubButton
+                  type="submit"
+                  [disabled]="submittingPassword()"
+                  class="px-4 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60"
+                >
+                  {{ submittingPassword() ? 'Đang đổi...' : 'Đổi mật khẩu' }}
+                </button>
+              </form>
+
+              <div class="grid md:grid-cols-2 gap-5">
+                <div class="bg-white border border-gray-100 rounded-2xl p-5">
+                  <h2 class="font-bold text-gray-900">Ngôn ngữ</h2>
+                  <p class="text-sm text-gray-500 mt-1">Chọn ngôn ngữ giao diện.</p>
+                  <div class="grid grid-cols-2 gap-2 mt-4">
+                    <button
+                      type="button"
+                      (click)="setLanguage('vi')"
+                      [class]="i18n.currentLanguage() === 'vi'
+                        ? 'px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold'
+                        : 'px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50'"
+                    >Tiếng Việt</button>
+                    <button
+                      type="button"
+                      (click)="setLanguage('en')"
+                      [class]="i18n.currentLanguage() === 'en'
+                        ? 'px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold'
+                        : 'px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50'"
+                    >English</button>
+                  </div>
+                </div>
+
+                <div class="bg-white border border-gray-100 rounded-2xl p-5">
+                  <h2 class="font-bold text-gray-900">Theme</h2>
+                  <p class="text-sm text-gray-500 mt-1">Chọn giao diện sáng hoặc tối.</p>
+                  <div class="grid grid-cols-2 gap-2 mt-4">
+                    <button
+                      type="button"
+                      (click)="setTheme('light')"
+                      [class]="themeService.currentTheme() === 'light'
+                        ? 'px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold'
+                        : 'px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50'"
+                    >Light</button>
+                    <button
+                      type="button"
+                      (click)="setTheme('dark')"
+                      [class]="themeService.currentTheme() === 'dark'
+                        ? 'px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold'
+                        : 'px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50'"
+                    >Dark</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else if (!selectedGroup()) {
+      <div class="flex-1 flex items-center justify-center text-gray-400 flex-col gap-3">
+        <svg class="w-16 h-16 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
+          </path>
+        </svg>
+        <p class="text-sm">Chọn nhóm để xem chi tiết</p>
+      </div>
+    } @else {
+      <div class="flex-1 min-w-[500px] min-h-0 border-r border-dashed border-gray-300 flex flex-col bg-white">
+        <!-- Group Header -->
+        <div class="py-5 px-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <div>
+            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ selectedGroup()!.name }}</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ selectedGroup()!.description || 'Quản lý chi phí chung.' }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              (click)="openEditGroupModal()"
+              class="px-3 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              title="Sửa nhóm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button
+              (click)="confirmDeleteGroup()"
+              class="px-3 py-2 text-red-500 border border-red-200 rounded-lg text-sm hover:bg-red-50 transition-colors"
+              title="Xóa nhóm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+            <button
+              ubButton
+              (click)="openCreateExpenseModal()"
+              class="px-5 py-2.5 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] transition-all flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Thêm chi phí
+            </button>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div
+          class="flex-1 min-h-0 flex flex-col p-6"
+          [ngClass]="activeTab() === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'"
+        >
+          <!-- Tabs -->
+          <div class="border-b border-gray-200 mb-5 flex gap-6 shrink-0">
+            @for (tab of [{key:'expenses',label:'Chi phí'},{key:'balances',label:'Cân đối'},{key:'chat',label:'Chat'}]; track tab.key) {
+              <button
+                type="button"
+                (click)="selectTab($any(tab.key))"
+                [class]="activeTab() === tab.key
+                  ? 'pb-3 text-emerald-600 font-semibold border-b-2 border-emerald-500'
+                  : 'pb-3 text-gray-400 font-semibold hover:text-gray-600'"
+              >{{ tab.label }}</button>
+            }
+          </div>
+
+          <!-- Expenses Tab -->
+          @if (activeTab() === 'expenses') {
+            @if (loadingExpenses()) {
+              <div class="flex items-center justify-center py-12 text-gray-400 text-sm">Đang tải chi phí...</div>
+            } @else if (expenses().length === 0) {
+              <div class="flex flex-col items-center justify-center py-16 text-gray-400">
+                <svg class="w-12 h-12 opacity-30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path>
+                </svg>
+                <p class="text-sm">Chưa có chi phí nào</p>
+                <button (click)="openCreateExpenseModal()" class="mt-2 text-emerald-500 text-xs underline">Thêm chi phí đầu tiên</button>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (expense of expenses(); track expense.id) {
+                  <div class="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] hover:shadow-md transition-shadow group">
+                    <div class="flex items-center gap-4">
+                      <div class="w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-lg shrink-0">
+                        @switch (expense.category) {
+                          @case ('FOOD') { 🍽️ }
+                          @case ('TRANSPORT') { 🚗 }
+                          @case ('ACCOMMODATION') { 🏠 }
+                          @case ('ENTERTAINMENT') { 🎉 }
+                          @case ('SHOPPING') { 🛒 }
+                          @case ('UTILITIES') { 💡 }
+                          @default { 📦 }
+                        }
+                      </div>
+                      <div>
+                        <p class="font-bold text-gray-900">{{ expense.description }}</p>
+                        <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                          <span>Trả bởi <span class="font-medium text-gray-700">{{ expense.paidByEmail === currentUserEmail() ? 'Bạn' : (expense.paidByName ?? expense.paidByEmail) }}</span></span>
+                          @if (expense.expenseDate) {
+                            <span>• {{ formatDate(expense.expenseDate) }}</span>
+                          }
+                          @if (expense.category) {
+                            <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{{ expense.category }}</span>
+                          }
+                        </div>
+                        @if (getMyShare(expense) > 0) {
+                          <p class="text-xs text-emerald-600 mt-0.5">Phần của bạn: {{ formatCurrency(getMyShare(expense)) }}</p>
+                        }
+                        @if (expense.receiptImageUrl) {
+                          <a
+                            [href]="expense.receiptImageUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-xs text-blue-600 hover:underline mt-0.5 inline-flex"
+                          >
+                            Xem file đính kèm
+                          </a>
+                        }
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="text-right">
+                        <p class="font-bold text-gray-900">{{ formatCurrency(expense.amount) }}</p>
+                        <p class="text-xs text-gray-400">{{ expense.splits.length }} người chia</p>
+                      </div>
+                      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          (click)="openEditExpenseModal(expense)"
+                          class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Sửa"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                          </svg>
+                        </button>
+                        <button
+                          (click)="confirmDeleteExpense(expense)"
+                          class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Balances Tab -->
+          @if (activeTab() === 'balances') {
+            @if (loadingBalances()) {
+              <div class="flex items-center justify-center py-12 text-gray-400 text-sm">Đang tải cân đối...</div>
+            } @else {
+              <div class="space-y-5">
+                <div class="grid grid-cols-3 gap-4">
+                  <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+                    <p class="text-xs text-emerald-700 font-semibold uppercase tracking-wider">Đã chi</p>
+                    <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(groupSummary()?.totalSpent ?? totalSpent()) }}</p>
+                  </div>
+                  <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                    <p class="text-xs text-blue-700 font-semibold uppercase tracking-wider">Đã thanh toán</p>
+                    <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(groupSummary()?.totalSettled ?? 0) }}</p>
+                  </div>
+                  <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Khoản cần xử lý</p>
+                    <p class="text-xl font-bold text-gray-900 mt-1">{{ groupBalances()?.debts?.length ?? 0 }}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <h3 class="font-bold text-gray-900">Ai cần trả cho ai</h3>
+                  <button
+                    type="button"
+                    (click)="openSettlementModal()"
+                    class="px-3 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
+                  >
+                    Ghi nhận đã trả
+                  </button>
+                </div>
+
+                @if ((groupBalances()?.debts?.length ?? 0) === 0) {
+                  <div class="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-6 text-center text-emerald-700 text-sm">
+                    Nhóm đang cân bằng, chưa có khoản nợ cần thanh toán.
+                  </div>
+                } @else {
+                  <div class="space-y-2">
+                    @for (debt of groupBalances()?.debts ?? []; track debt.fromUserId + debt.toUserId) {
+                      <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                        <div>
+                          <p class="text-sm text-gray-700">
+                            <span class="font-bold text-gray-900">{{ debt.fromUserName ?? debt.fromUserEmail }}</span>
+                            cần trả cho
+                            <span class="font-bold text-gray-900">{{ debt.toUserName ?? debt.toUserEmail }}</span>
+                          </p>
+                          <p class="text-xs text-gray-400">{{ debt.fromUserEmail }} → {{ debt.toUserEmail }}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="font-bold text-emerald-600">{{ formatCurrency(debt.amount) }}</span>
+                          <button
+                            type="button"
+                            (click)="openSettlementModal(debt)"
+                            class="px-2.5 py-1.5 text-xs rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                          >
+                            Đã trả
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-white border border-gray-100 rounded-2xl p-4">
+                    <h3 class="font-bold text-gray-900 mb-3">Số dư thành viên</h3>
+                    <div class="space-y-2">
+                      @for (balance of groupBalances()?.balances ?? []; track balance.userId) {
+                        <div class="flex items-center justify-between text-sm">
+                          <span class="text-gray-700">{{ balance.userName ?? balance.userEmail }}</span>
+                          <span [ngClass]="balance.netAmount >= 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'">
+                            {{ formatCurrency(balance.netAmount) }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <div class="bg-white border border-gray-100 rounded-2xl p-4">
+                    <h3 class="font-bold text-gray-900 mb-3">Lịch sử thanh toán</h3>
+                    @if (settlements().length === 0) {
+                      <p class="text-sm text-gray-400">Chưa có thanh toán nào.</p>
+                    } @else {
+                      <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        @for (s of settlements(); track s.id) {
+                          <div class="text-sm border-b border-gray-100 pb-2 last:border-b-0">
+                            <div class="flex justify-between gap-2">
+                              <span class="text-gray-700">{{ s.fromUserName ?? s.fromUserEmail }} → {{ s.toUserName ?? s.toUserEmail }}</span>
+                              <span class="font-bold text-gray-900">{{ formatCurrency(s.amount) }}</span>
+                            </div>
+                            <p class="text-xs text-gray-400">{{ formatDate(s.settlementDate ?? s.createdAt) }} · {{ s.status }}</p>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          }
+
+          <!-- Chat Tab -->
+          @if (activeTab() === 'chat') {
+            <input
+              #chatFileInput
+              type="file"
+              class="hidden"
+              accept="image/*,application/pdf"
+              (change)="onChatFileSelected($event)"
+            />
+            <div class="flex-1 min-h-0 flex flex-col -mx-6 -mb-6 border-t border-gray-100 bg-white">
+              @if (chatLoading()) {
+                <div class="flex-1 flex items-center justify-center py-16 text-gray-400 text-sm">Đang tải chat...</div>
+              } @else {
+                <div
+                  #chatScroll
+                  class="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-1.5"
+                  (scroll)="onChatScroll($event)"
+                >
+                  @if (chatLoadingMore()) {
+                    <p class="text-center text-xs text-gray-400 py-1">Đang tải tin cũ hơn...</p>
+                  }
+                  @if (chatMessages().length === 0) {
+                    <div class="flex flex-col items-center justify-center py-16 text-gray-400 text-sm gap-2">
+                      <svg class="w-10 h-10 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                      </svg>
+                      <span>Chưa có tin nhắn. Hãy bắt đầu trò chuyện.</span>
+                    </div>
+                  }
+                  @for (m of chatMessages(); track m.id) {
+                    <div
+                      class="flex gap-2 group/message"
+                      [ngClass]="m.senderId === currentUserId() ? 'justify-end' : 'justify-start items-end'"
+                    >
+                      @if (m.senderId !== currentUserId()) {
+                        <div
+                          class="w-8 h-8 rounded-full text-white flex items-center justify-center text-xs font-bold shrink-0"
+                          [ngClass]="getAvatarColor(m.senderEmail ?? m.senderName)"
+                        >
+                          {{ getInitials(m.senderName ?? m.senderEmail) }}
+                        </div>
+                      }
+                      <div class="max-w-[80%] min-w-0 flex flex-col gap-1">
+                        @if (m.senderId !== currentUserId()) {
+                          <span class="text-[11px] text-gray-500 px-1">{{ m.senderName ?? m.senderEmail }}</span>
+                        }
+                        @if (editingMessageId() === m.id) {
+                          <div class="rounded-2xl border border-emerald-200 bg-white p-3 shadow-sm space-y-2">
+                            <textarea
+                              [(ngModel)]="chatEditDraft"
+                              rows="2"
+                              class="w-full text-sm rounded-lg border border-gray-200 px-2 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500"
+                            ></textarea>
+                            <div class="flex justify-end gap-2">
+                              <button type="button" (click)="cancelEditMessage()" class="text-xs px-2 py-1 text-gray-600 hover:bg-gray-100 rounded">Hủy</button>
+                              <button type="button" (click)="saveEditMessage()" class="text-xs px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600">Lưu</button>
+                            </div>
+                          </div>
+                        } @else {
+                          <div
+                            class="rounded-2xl px-3.5 py-2.5 text-sm shadow-sm break-words relative group/msg"
+                            [ngClass]="m.senderId === currentUserId()
+                              ? 'bg-emerald-500 text-white rounded-br-md'
+                              : 'bg-white border border-gray-200 text-gray-900 rounded-bl-md'"
+                          >
+                            <span
+                              class="pointer-events-none absolute top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-gray-600/80 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg backdrop-blur-sm transition-opacity group-hover/message:opacity-100 z-20"
+                              [ngClass]="m.senderId === currentUserId()
+                                ? 'right-full mr-2'
+                                : 'left-full ml-2'"
+                            >
+                              {{ formatChatTime(m.createdAt) }}
+                            </span>
+                            @if (m.isDeleted) {
+                              <p class="italic opacity-80 text-sm">Tin nhắn đã bị xóa</p>
+                            } @else {
+                              @if (m.messageType === 'IMAGE' && m.attachmentUrl) {
+                                <a [href]="m.attachmentUrl" target="_blank" rel="noopener noreferrer" class="block">
+                                  <img [src]="m.attachmentUrl" alt="" class="max-h-48 rounded-lg border border-black/10" />
+                                </a>
+                                @if (m.content) {
+                                  <p class="mt-1.5 text-xs opacity-90">{{ m.content }}</p>
+                                }
+                              } @else if (m.messageType === 'FILE' && m.attachmentUrl) {
+                                <a
+                                  [href]="m.attachmentUrl"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="underline font-medium break-all"
+                                  [class.text-white]="m.senderId === currentUserId()"
+                                >
+                                  {{ m.content || 'Tệp đính kèm' }}
+                                </a>
+                              } @else {
+                                <p class="whitespace-pre-wrap">{{ m.content }}</p>
+                              }
+                            }
+                            @if (m.editedAt && !m.isDeleted) {
+                              <p class="text-[10px] mt-1 opacity-70">Đã sửa</p>
+                            }
+                            @if (m.senderId === currentUserId() && !m.isDeleted) {
+                              <div
+                                class="absolute -top-2 -right-1 flex gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity"
+                              >
+                                <button
+                                  type="button"
+                                  (click)="startEditMessage(m)"
+                                  class="p-1 rounded bg-white/90 text-gray-600 shadow border border-gray-200 hover:text-emerald-600"
+                                  title="Sửa"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="deleteChatMessage(m)"
+                                  class="p-1 rounded bg-white/90 text-gray-600 shadow border border-gray-200 hover:text-red-600"
+                                  title="Xóa"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                  </svg>
+                                </button>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+                @if (typingLabel()) {
+                  <p class="shrink-0 px-4 py-1 text-xs text-emerald-600 bg-emerald-50/80 border-t border-emerald-100">{{ typingLabel() }}</p>
+                }
+                <div class="shrink-0 border-t border-gray-200 bg-white p-3 flex items-end gap-2">
+                  <button
+                    type="button"
+                    (click)="openChatFilePicker()"
+                    class="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl border border-gray-200 shrink-0"
+                    title="Đính kèm ảnh hoặc PDF"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
+                  </button>
+                  <input
+                    type="text"
+                    [(ngModel)]="chatInput"
+                    (input)="onChatInput()"
+                    (keydown.enter)="$event.preventDefault(); sendChatMessage()"
+                    placeholder="Nhập tin nhắn... (Enter để gửi)"
+                    class="flex-1 h-11 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    (click)="sendChatMessage()"
+                    class="shrink-0 h-11 w-11 inline-flex items-center justify-center bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 shadow-sm"
+                    title="Gửi tin nhắn"
+                  >
+                    <img src="/sendmsg.svg" alt="Gửi" class="h-5 w-5 invert" />
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- MEMBERS PANEL -->
+      <div class="w-80 flex-shrink-0 flex flex-col p-5 bg-white border-l border-gray-100">
+        <div class="flex justify-between items-center mb-5 shrink-0">
+          <h2 class="text-xs font-semibold text-gray-400 tracking-wider uppercase">
+            Thành viên ({{ selectedGroup()!.memberCount }})
+          </h2>
+          <button
+            (click)="openInviteModal()"
+            class="text-emerald-600 hover:text-white border border-emerald-500 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Mời
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-2">
+          @for (member of members(); track member.id) {
+            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="relative shrink-0">
+                  <div
+                    [class]="'w-10 h-10 rounded-full text-white flex items-center justify-center font-bold shadow-sm ring-2 '
+                      + (isMemberOnline(member.userId) ? 'ring-emerald-400 ' : 'ring-white ')
+                      + getAvatarColor(member.userEmail)"
+                  >
+                    {{ getInitials(member.userFullName ?? member.userEmail) }}
+                  </div>
+                  @if (isMemberOnline(member.userId)) {
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" title="Đang online"></span>
+                  }
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-900">
+                    {{ member.userEmail === currentUserEmail() ? 'Bạn' : (member.userFullName ?? member.userEmail) }}
+                  </p>
+                  <p class="text-xs text-gray-400">{{ member.userEmail }}</p>
+                  @if (member.invitationStatus === 'PENDING') {
+                    <span class="text-xs text-amber-500">Đang chờ xác nhận</span>
+                  }
+                </div>
+              </div>
+              @if (member.role === 'ADMIN') {
+                <span class="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Admin</span>
+              } @else if (member.invitationStatus === 'PENDING') {
+                <button
+                  type="button"
+                  (click)="resendInvite(member)"
+                  class="text-xs font-medium bg-amber-50 text-amber-700 px-2 py-1 rounded hover:bg-amber-100"
+                >
+                  Gửi lại
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+    </div>
+  </div>
+</div>
+
+<!-- ───────────────── MODALS ───────────────── -->
+
+<!-- Create Group -->
+@if (showCreateGroupModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeAllModals()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900 mb-5">Tạo nhóm mới</h3>
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600 mb-3 text-center">{{ errorMessage() }}</p>
+      }
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Tên nhóm *</label>
+          <input [(ngModel)]="groupForm.name" placeholder="VD: Đà Lạt Trip 2024"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả</label>
+          <input [(ngModel)]="groupForm.description" placeholder="Mô tả ngắn về nhóm"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="closeAllModals()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button ubButton (click)="createGroup()" [disabled]="submittingGroup()"
+          class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60">
+          {{ submittingGroup() ? 'Đang tạo...' : 'Tạo nhóm' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Group -->
+@if (showEditGroupModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeAllModals()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900 mb-5">Sửa nhóm</h3>
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600 mb-3 text-center">{{ errorMessage() }}</p>
+      }
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Tên nhóm *</label>
+          <input [(ngModel)]="groupForm.name"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả</label>
+          <input [(ngModel)]="groupForm.description"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="closeAllModals()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button (click)="updateGroup()" [disabled]="submittingGroup()"
+          class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60">
+          {{ submittingGroup() ? 'Đang lưu...' : 'Lưu thay đổi' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Group Confirm -->
+@if (showDeleteGroupModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-2">Xóa nhóm?</h3>
+      <p class="text-sm text-gray-500 mb-6">Thao tác này sẽ xóa mềm nhóm <strong>{{ selectedGroup()?.name }}</strong>. Không thể hoàn tác.</p>
+      <div class="flex gap-3">
+        <button (click)="showDeleteGroupModal.set(false)" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button (click)="deleteGroup()" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600">Xóa</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Create Expense -->
+@if (showCreateExpenseModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeAllModals()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900 mb-5">Thêm chi phí</h3>
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600 mb-3 text-center">{{ errorMessage() }}</p>
+      }
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả *</label>
+          <input [(ngModel)]="expenseForm.description" placeholder="VD: Tiền xăng, ăn tối..."
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Số tiền (VND) *</label>
+          <input [(ngModel)]="expenseForm.amount" type="number" min="0" placeholder="0"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Danh mục</label>
+          <select [(ngModel)]="expenseForm.category"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            <option value="">-- Chọn danh mục --</option>
+            @for (cat of categories; track cat.value) {
+              <option [value]="cat.value">{{ cat.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Người trả</label>
+          <select [(ngModel)]="expenseForm.paidByUserId"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            <option value="">-- Tôi trả --</option>
+            @for (member of members(); track member.id) {
+              @if (member.invitationStatus === 'ACCEPTED' && member.userId && member.userId !== currentUserId()) {
+                <option [value]="member.userId">{{ member.userFullName ?? member.userEmail }}</option>
+              }
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">File đính kèm</label>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            (change)="onExpenseAttachmentSelected($event)"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          @if (expenseAttachmentFile) {
+            <div class="mt-2 flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+              <span class="truncate">{{ expenseAttachmentFile.name }}</span>
+              <button type="button" (click)="clearExpenseAttachment()" class="text-red-500 font-semibold hover:text-red-600">Xóa</button>
+            </div>
+          }
+        </div>
+        <p class="text-xs text-gray-400">Chi phí sẽ được chia đều cho tất cả thành viên đã tham gia nhóm.</p>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="closeAllModals()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button ubButton (click)="createExpense()" [disabled]="submittingExpense()"
+          class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60">
+          {{ submittingExpense() ? 'Đang tạo...' : 'Thêm chi phí' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Expense -->
+@if (showEditExpenseModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeAllModals()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900 mb-5">Sửa chi phí</h3>
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600 mb-3 text-center">{{ errorMessage() }}</p>
+      }
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả *</label>
+          <input [(ngModel)]="expenseForm.description"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Số tiền (VND) *</label>
+          <input [(ngModel)]="expenseForm.amount" type="number" min="0"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Danh mục</label>
+          <select [(ngModel)]="expenseForm.category"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            <option value="">-- Không chọn --</option>
+            @for (cat of categories; track cat.value) {
+              <option [value]="cat.value">{{ cat.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="closeAllModals()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button (click)="updateExpense()" [disabled]="submittingExpense()"
+          class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60">
+          {{ submittingExpense() ? 'Đang lưu...' : 'Lưu thay đổi' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Expense Confirm -->
+@if (showDeleteExpenseModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-2">Xóa chi phí?</h3>
+      <p class="text-sm text-gray-500 mb-6">Xóa <strong>{{ expenseToDelete()?.description }}</strong> ({{ formatCurrency(expenseToDelete()?.amount ?? 0) }})?</p>
+      <div class="flex gap-3">
+        <button (click)="showDeleteExpenseModal.set(false)" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button (click)="deleteExpense()" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600">Xóa</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Create Settlement -->
+@if (showSettlementModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeAllModals()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900 mb-5">Ghi nhận đã trả</h3>
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600 mb-3 text-center">{{ errorMessage() }}</p>
+      }
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Người trả *</label>
+          <select [(ngModel)]="settlementForm.fromUserId"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            <option value="">-- Chọn người trả --</option>
+            @for (member of members(); track member.id) {
+              @if (member.invitationStatus === 'ACCEPTED' && member.userId) {
+                <option [value]="member.userId">{{ member.userFullName ?? member.userEmail }}</option>
+              }
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Người nhận *</label>
+          <select [(ngModel)]="settlementForm.toUserId"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            <option value="">-- Chọn người nhận --</option>
+            @for (member of members(); track member.id) {
+              @if (member.invitationStatus === 'ACCEPTED' && member.userId) {
+                <option [value]="member.userId">{{ member.userFullName ?? member.userEmail }}</option>
+              }
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Số tiền (VND) *</label>
+          <input [(ngModel)]="settlementForm.amount" type="number" min="0"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Ghi chú</label>
+          <input [(ngModel)]="settlementForm.note" placeholder="VD: Chuyển khoản tối qua"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="closeAllModals()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button (click)="createSettlement()" [disabled]="submittingSettlement()"
+          class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60">
+          {{ submittingSettlement() ? 'Đang lưu...' : 'Ghi nhận' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Invite Member -->
+@if (showInviteModal()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeAllModals()">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900 mb-5">Mời thành viên</h3>
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600 mb-3 text-center">{{ errorMessage() }}</p>
+      }
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Tìm user (username/email)</label>
+        <input
+          [(ngModel)]="inviteKeyword"
+          (ngModelChange)="onInviteKeywordChange()"
+          type="text"
+          placeholder="nhập username hoặc email"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+
+        @if (searchingInviteCandidates()) {
+          <p class="text-xs text-gray-400 mt-2">Đang tìm kiếm...</p>
+        }
+
+        @if (inviteCandidates().length > 0) {
+          <div class="mt-2 border border-gray-200 rounded-xl max-h-44 overflow-y-auto">
+            @for (candidate of inviteCandidates(); track candidate.userId) {
+              <button
+                type="button"
+                (click)="pickInviteCandidate(candidate)"
+                class="w-full text-left px-3 py-2 hover:bg-emerald-50 transition-colors border-b border-gray-100 last:border-b-0"
+              >
+                <p class="text-sm font-medium text-gray-800">{{ candidate.username }}</p>
+                <p class="text-xs text-gray-500">{{ candidate.fullName || 'Unknown' }} • {{ candidate.email }}</p>
+              </button>
+            }
+          </div>
+        }
+
+        <label class="block text-sm font-medium text-gray-700 mt-3 mb-1.5">Email được mời</label>
+        <input [(ngModel)]="inviteEmail" type="email" placeholder="email@example.com"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Người dùng sẽ nhận được lời mời qua email.</p>
+      <div class="flex gap-3 mt-6">
+        <button (click)="closeAllModals()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <button ubButton (click)="inviteMember()"
+          class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600">Gửi lời mời</button>
+      </div>
+    </div>
+  </div>
+}

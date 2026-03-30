@@ -1,0 +1,22 @@
+# Dependencies / build
+node_modules/
+dist/
+.angular/
+coverage/
+
+# IDE / OS
+.idea/
+.vscode/
+*.log
+Thumbs.db
+.DS_Store
+
+# Env
+.env
+.env.*
+!.env.example
+*.env
+
+# YAML (project rule); workflows stay tracked
+**/*.yaml
+!.github/**/*.yaml
